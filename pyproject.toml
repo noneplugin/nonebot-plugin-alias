@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot_plugin_alias"
-version = "0.1.0"
+version = "0.1.1"
 description = "A simple plugin for adding aliases for Nonebot command"
 authors = ["meetwq <meetwq@gmail.com>"]
 license = "MIT"
