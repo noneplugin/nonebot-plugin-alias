@@ -27,23 +27,33 @@ class AliasList():
         )
         return True
 
-    def add_alias(self, name: str, command: str) -> bool:
-        self.list[name] = command
+    def add_alias(self, id: str, name: str, command: str) -> bool:
+        if id not in self.list:
+            self.list[id] = {}
+        self.list[id][name] = command
         return self._dump_alias()
 
-    def del_alias(self, name: str) -> bool:
-        self.list.pop(name)
+    def del_alias(self, id: str, name: str) -> bool:
+        if id not in self.list:
+            return False
+        self.list[id].pop(name)
         return self._dump_alias()
 
-    def del_alias_all(self) -> bool:
-        self.list = {}
+    def del_alias_all(self, id: str) -> bool:
+        self.list[id] = {}
         return self._dump_alias()
 
-    def get_alias(self, name: str) -> str:
-        return self.list[name] if name in self.list else ''
+    def get_alias(self, id: str, name: str) -> str:
+        if id not in self.list:
+            return ''
+        if name not in self.list[id]:
+            return ''
+        return self.list[id][name]
 
-    def get_alias_all(self) -> dict:
-        return self.list
+    def get_alias_all(self, id: str) -> dict:
+        if id not in self.list:
+            return {}
+        return self.list[id].copy()
 
 
 aliases = AliasList(data_path / 'aliases.json')
