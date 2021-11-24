@@ -3,19 +3,19 @@ from nonebot.adapters.cqhttp import Bot, MessageEvent
 from nonebot.rule import ArgumentParser
 from nonebot.typing import T_State
 
-from .handler import *
-
+from .handler import handle, get_id
+from .alias_list import aliases
 
 alias_parser = ArgumentParser()
 alias_parser.add_argument('-p', '--print', action='store_true')
-alias_parser.add_argument('-gl', '--globally', action='store_true')
+alias_parser.add_argument('-g', '--globally', action='store_true')
 alias_parser.add_argument('names', nargs='*')
 
 alias = on_shell_command('alias', parser=alias_parser, priority=10)
 
 unalias_parser = ArgumentParser()
 unalias_parser.add_argument('-a', '--all', action='store_true')
-unalias_parser.add_argument('-gl', '--globally', action='store_true')
+unalias_parser.add_argument('-g', '--globally', action='store_true')
 unalias_parser.add_argument('names', nargs='*')
 
 unalias = on_shell_command('unalias', parser=unalias_parser, priority=10)
@@ -45,6 +45,9 @@ async def _(bot: Bot, event: MessageEvent, state: T_State):
         else:
             await alias.finish(f'尚未添加任何{word}')
 
+    if gl and str(event.user_id) not in bot.config.superusers:
+        await alias.finish('管理全局别名需要超级用户权限！')
+
     message = ''
     names = args.names
     for name in names:
@@ -71,9 +74,12 @@ async def _(bot: Bot, event: MessageEvent, state: T_State):
     id = 'global' if gl else get_id(event)
     word = '全局别名' if gl else '别名'
 
+    if gl and str(event.user_id) not in bot.config.superusers:
+        await unalias.finish('管理全局别名需要超级用户权限！')
+
     if args.all:
         if aliases.del_alias_all(id):
-            await unalias.finish('成功删除所有{word}')
+            await unalias.finish(f"成功删除所有{word}")
 
     message = ''
     names = args.names

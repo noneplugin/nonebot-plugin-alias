@@ -1,13 +1,12 @@
-import re
 from nonebot.adapters.cqhttp import Bot, Event, MessageEvent, GroupMessageEvent
 from nonebot.message import event_preprocessor
 from nonebot.typing import T_State
 
-from .alias_list import aliases
+from .parser import parse_msg
 
 
 @event_preprocessor
-async def _(bot: Bot, event: Event, state: T_State):
+async def handle(bot: Bot, event: Event, state: T_State):
     if not isinstance(event, MessageEvent):
         return
     msgs = event.get_message()
@@ -16,17 +15,15 @@ async def _(bot: Bot, event: Event, state: T_State):
     msg = str(msgs[0]).lstrip()
     if not msg:
         return
-    alias_all = aliases.get_alias_all(get_id(event))
-    alias_all_gl = aliases.get_alias_all('global')
-    alias_all_gl.update(alias_all)
-    for name in sorted(alias_all_gl, reverse=True):
-        if re.match(f'{name}', msg):
-            msg = re.sub(f'{name}', f'{alias_all_gl[name]}', msg, count=1)
-            event.message[0].data['text'] = msg
-            return
+
+    try:
+        msg = parse_msg(msg, get_id(event))
+        event.message[0].data['text'] = msg
+    except:
+        return
 
 
-def get_id(event: MessageEvent):
+def get_id(event: MessageEvent) -> str:
     if isinstance(event, GroupMessageEvent):
         return 'group_' + str(event.group_id)
     else:

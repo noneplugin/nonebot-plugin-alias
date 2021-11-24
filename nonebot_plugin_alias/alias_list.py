@@ -36,11 +36,13 @@ class AliasList():
     def del_alias(self, id: str, name: str) -> bool:
         if id not in self.list:
             return False
-        self.list[id].pop(name)
+        self.list[id].pop(name, '')
+        if not self.list[id]:
+            self.list.pop(id, {})
         return self._dump_alias()
 
     def del_alias_all(self, id: str) -> bool:
-        self.list[id] = {}
+        self.list.pop(id, {})
         return self._dump_alias()
 
     def get_alias(self, id: str, name: str) -> str:
