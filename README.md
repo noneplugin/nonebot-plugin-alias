@@ -17,29 +17,31 @@
 
 ### 示例
 
-<img src="./examples/1.png" width="300" align="left"/>
-
-<img src="./examples/2.png" width="300" align="left"/>
-
+<div align="left">
+  <img src="./examples/1.png" width="300" />
+  <img src="./examples/2.png" width="300" />
+</div>
 
 ### 传入参数
 
-可以用 bash shell 的风格在别名中使用参数
-如：`alias test="echo $1"`
+可以用 bash shell 的风格在别名中使用参数，如：`alias test="echo $1"`
+
 `$1` 表示第一个参数，以此类推；`$a` 表示所有参数
 
-**当创建别名的命令中包含 `$` 符号时，即认为使用了参数**
+**当创建别名的命令中包含 `$` 符号时，即认为使用了参数。**
+
 **此时，别名之后的内容会以参数方式解析，而不仅仅是替换别名**
 
 使用 [expandvars](https://github.com/sayanarijit/expandvars) 来解析参数，可实现参数默认值、切片等功能：
-`alias test="echo ${1:-default}"`
-`alias test="echo ${1:0:4}"`
+
+- `alias test="echo ${1:-default}"`
+- `alias test="echo ${1:0:4}"`
 
 由于 expandvars 还未实现 shell 所有的变量扩展特性，具体可用的功能可以查看该项目
 
 ### 传参示例
 
-<img src="./examples/3.png" width="500" align="left"/>
-
-<img src="./examples/4.png" width="500" align="left"/>
-
+<div align="left">
+<img src="./examples/3.png" width="500" />
+<img src="./examples/4.png" width="500" />
+</div>
