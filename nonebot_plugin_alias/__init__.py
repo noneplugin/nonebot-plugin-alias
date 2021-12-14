@@ -6,6 +6,24 @@ from nonebot.typing import T_State
 from .handler import handle, get_id
 from .alias_list import aliases
 
+
+__help__plugin_name__ = 'alias'
+__des__ = '为机器人指令创建别名'
+__cmd__ = '''
+添加别名：alias {name}={command}
+查看别名：alias {name}
+别名列表：alias -p
+删除别名：unalias {name}
+清空别名：unalias -a
+'''.strip()
+__short_cmd__ = 'alias {name}={command}'
+__example__ = '''
+alias '喷水'='echo 呼风唤雨'
+unalias '喷水'
+'''.strip()
+__usage__ = f'{__des__}\nUsage:\n{__cmd__}\nExample:\n{__example__}'
+
+
 alias_parser = ArgumentParser()
 alias_parser.add_argument('-p', '--print', action='store_true')
 alias_parser.add_argument('-g', '--globally', action='store_true')
