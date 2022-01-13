@@ -1,14 +1,11 @@
-from nonebot.adapters.cqhttp import Bot, Event, MessageEvent, GroupMessageEvent
+from nonebot.adapters.onebot.v11 import MessageEvent, GroupMessageEvent
 from nonebot.message import event_preprocessor
-from nonebot.typing import T_State
 
 from .parser import parse_msg
 
 
 @event_preprocessor
-async def handle(bot: Bot, event: Event, state: T_State):
-    if not isinstance(event, MessageEvent):
-        return
+async def handle(event: MessageEvent):
     msgs = event.get_message()
     if len(msgs) < 1 or msgs[0].type != 'text':
         return

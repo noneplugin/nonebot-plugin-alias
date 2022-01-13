@@ -1,7 +1,8 @@
+from argparse import Namespace
 from nonebot import on_shell_command
-from nonebot.adapters.cqhttp import Bot, MessageEvent
+from nonebot.adapters.onebot.v11 import Bot, MessageEvent
 from nonebot.rule import ArgumentParser
-from nonebot.typing import T_State
+from nonebot.params import ShellCommandArgs
 
 from .handler import handle, get_id
 from .alias_list import aliases
@@ -40,8 +41,7 @@ unalias = on_shell_command('unalias', parser=unalias_parser, priority=10)
 
 
 @alias.handle()
-async def _(bot: Bot, event: MessageEvent, state: T_State):
-    args = state['args']
+async def _(bot: Bot, event: MessageEvent, args: Namespace = ShellCommandArgs()):
     gl = args.globally
     id = 'global' if gl else get_id(event)
     word = '全局别名' if gl else '别名'
@@ -86,8 +86,7 @@ async def _(bot: Bot, event: MessageEvent, state: T_State):
 
 
 @unalias.handle()
-async def _(bot: Bot, event: MessageEvent, state: T_State):
-    args = state['args']
+async def _(bot: Bot, event: MessageEvent, args: Namespace = ShellCommandArgs()):
     gl = args.globally
     id = 'global' if gl else get_id(event)
     word = '全局别名' if gl else '别名'
