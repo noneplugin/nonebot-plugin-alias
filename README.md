@@ -4,6 +4,8 @@
 
 ### 使用
 
+**以下命令需要加[命令前缀](https://v2.nonebot.dev/docs/api/config#Config-command_start) (默认为`/`)，可自行设置为空**
+
 - `alias [别名]=[指令名称]` 添加别名
 - `alias [别名]` 查看别名
 - `alias -p` 查看所有别名
