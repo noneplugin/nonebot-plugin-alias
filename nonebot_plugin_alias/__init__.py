@@ -12,17 +12,17 @@ __plugin_meta__ = PluginMetadata(
     name="命令别名",
     description="为机器人指令创建别名",
     usage=(
-        "添加别名：alias {name}={command}"
-        "查看别名：alias {name}"
-        "别名列表：alias -p"
-        "删除别名：unalias {name}"
+        "添加别名：alias {name}={command}\n"
+        "查看别名：alias {name}\n"
+        "别名列表：alias -p\n"
+        "删除别名：unalias {name}\n"
         "清空别名：unalias -a"
     ),
     extra={
         "unique_name": "alias",
         "example": "alias '喷水'='echo 呼风唤雨'\nunalias '喷水'",
         "author": "meetwq <meetwq@gmail.com>",
-        "version": "0.3.1",
+        "version": "0.3.2",
     },
 )
 
