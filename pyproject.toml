@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot_plugin_alias"
-version = "0.3.2"
+version = "0.4.0"
 description = "A simple plugin for adding aliases for Nonebot command"
 authors = ["meetwq <meetwq@gmail.com>"]
 license = "MIT"
@@ -9,14 +9,18 @@ homepage = "https://github.com/noneplugin/nonebot-plugin-alias"
 repository = "https://github.com/noneplugin/nonebot-plugin-alias"
 
 [tool.poetry.dependencies]
-python = "^3.7.3"
-nonebot2 = "^2.0.0-beta.4"
-nonebot-adapter-onebot = "^2.0.0-beta.1"
-expandvars = "^0.7.0"
+python = "^3.8"
+nonebot2 = { version = "^2.0.0-rc.1", extras = ["fastapi"] }
+nonebot-adapter-onebot = "^2.2.0"
+nonebot-plugin-datastore = "^0.5.0"
+expandvars = ">=0.8.0,<1.0.0"
 
-[tool.poetry.dev-dependencies]
-nb-cli = "^0.6.0"
+[tool.poetry.group.dev.dependencies]
+nb-cli = "^1.0.0"
 black = "^22.1.0"
+
+[tool.nonebot]
+plugins = ["nonebot_plugin_alias"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
