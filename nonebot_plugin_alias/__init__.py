@@ -119,8 +119,12 @@ def create_alias_matcher(session_id: str, name: str, command: str) -> type[Match
                 msg.insert(0, new_segment)
             return msg
 
+        def _is_fake() -> bool:
+            return True
+
         fake_event = deepcopy(event)
         fake_event.get_message = get_message
+        setattr(fake_event, "_is_fake", _is_fake)
         await handle_event(bot, fake_event)
 
     return _matcher
