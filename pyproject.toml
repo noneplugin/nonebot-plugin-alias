@@ -9,18 +9,24 @@ homepage = "https://github.com/noneplugin/nonebot-plugin-alias"
 repository = "https://github.com/noneplugin/nonebot-plugin-alias"
 
 [tool.poetry.dependencies]
-python = "^3.8"
-nonebot2 = { version = "^2.0.0-rc.1", extras = ["fastapi"] }
-nonebot-adapter-onebot = "^2.2.0"
-nonebot-plugin-datastore = "^0.5.0"
-expandvars = ">=0.8.0,<1.0.0"
+python = "^3.9"
+nonebot2 = "^2.3.0"
+nonebot-plugin-alconna = ">=0.51.4"
 
 [tool.poetry.group.dev.dependencies]
-nb-cli = "^1.0.0"
-black = "^22.1.0"
 
-[tool.nonebot]
-plugins = ["nonebot_plugin_alias"]
+[tool.pyright]
+pythonVersion = "3.9"
+pythonPlatform = "All"
+typeCheckingMode = "basic"
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "UP", "C", "T", "PYI", "PT", "Q"]
+ignore = ["E402", "C901", "UP037"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -1,12 +1,16 @@
-from argparse import Namespace
-from nonebot import on_shell_command
-from nonebot.rule import ArgumentParser
-from nonebot.plugin import PluginMetadata
-from nonebot.params import ShellCommandArgs
-from nonebot.adapters.onebot.v11 import Bot, MessageEvent, PrivateMessageEvent
+from copy import deepcopy
+from typing import NamedTuple
 
-from .handler import handle, get_id
-from .alias_list import aliases
+from nonebot import on_command, require
+from nonebot.adapters import Bot, Event, Message
+from nonebot.matcher import Matcher
+from nonebot.message import handle_event
+from nonebot.params import CommandArg
+from nonebot.plugin import PluginMetadata, inherit_supported_adapters
+
+require("nonebot_plugin_alconna")
+
+from nonebot_plugin_alconna import Alconna, Args, KeyWordVar, MultiVar, on_alconna
 
 __plugin_meta__ = PluginMetadata(
     name="命令别名",
@@ -14,115 +18,109 @@ __plugin_meta__ = PluginMetadata(
     usage=(
         "添加别名：alias {name}={command}\n"
         "查看别名：alias {name}\n"
-        "别名列表：alias -p\n"
-        "删除别名：unalias {name}\n"
-        "清空别名：unalias -a"
+        "删除别名：unalias {name}"
     ),
+    type="application",
+    homepage="https://github.com/noneplugin/nonebot-plugin-alias",
+    supported_adapters=inherit_supported_adapters("nonebot_plugin_alconna"),
     extra={
-        "unique_name": "alias",
-        "example": "alias '喷水'='echo 呼风唤雨'\nunalias '喷水'",
-        "author": "meetwq <meetwq@gmail.com>",
-        "version": "0.3.2",
+        "example": "alias 喷水='echo 呼风唤雨'\nunalias 喷水",
     },
 )
 
 
-alias_parser = ArgumentParser()
-alias_parser.add_argument("-p", "--print", action="store_true")
-alias_parser.add_argument("-g", "--globally", action="store_true")
-alias_parser.add_argument("names", nargs="*")
-
-alias = on_shell_command("alias", parser=alias_parser, priority=10)
-
-unalias_parser = ArgumentParser()
-unalias_parser.add_argument("-a", "--all", action="store_true")
-unalias_parser.add_argument("-g", "--globally", action="store_true")
-unalias_parser.add_argument("names", nargs="*")
-
-unalias = on_shell_command("unalias", parser=unalias_parser, priority=10)
+class Alias(NamedTuple):
+    name: str
+    command: str
+    matcher: type[Matcher]
 
 
-@alias.handle()
-async def _(bot: Bot, event: MessageEvent, args: Namespace = ShellCommandArgs()):
-    gl = args.globally
-    id = "global" if gl else get_id(event)
-    word = "全局别名" if gl else "别名"
+_aliases: dict[str, dict[str, Alias]] = {}
 
-    if args.print:
-        message = "全局别名：" if gl else ""
-        alias_all = aliases.get_alias_all(id)
-        for name in sorted(alias_all):
-            message += f"\n{name}='{alias_all[name]}'"
-        if not gl:
-            alias_all_gl = aliases.get_alias_all("global")
-            if alias_all_gl:
-                message += "\n全局别名："
-                for name in sorted(alias_all_gl):
-                    message += f"\n{name}='{alias_all_gl[name]}'"
-        message = message.strip()
-        if message:
-            await alias.finish(message)
-        else:
-            await alias.finish(f"尚未添加任何{word}")
+alias_matcher = on_alconna(
+    Alconna(
+        "alias",
+        Args["names", MultiVar(str, "*")][
+            "aliases", MultiVar(KeyWordVar(str, "="), "*")
+        ],
+    ),
+    block=True,
+    priority=11,
+    use_cmd_start=True,
+)
+unalias_matcher = on_alconna(
+    Alconna("unalias", Args["names", MultiVar(str, "*")]),
+    block=True,
+    priority=11,
+    use_cmd_start=True,
+)
 
-    is_admin = event.sender.role in ["admin", "owner"]
-    is_superuser = str(event.user_id) in bot.config.superusers
-    is_private = isinstance(event, PrivateMessageEvent)
 
-    if gl and not is_superuser:
-        await alias.finish("管理全局别名需要超级用户权限！")
+@alias_matcher.handle()
+async def _(
+    event: Event, matcher: Matcher, names: tuple[str, ...], aliases: dict[str, str]
+):
+    session_id = event.get_session_id()
+    responses = []
 
-    if not (is_admin or is_superuser or is_private):
-        await alias.finish("管理别名需要群管理员权限！")
+    if not names and not aliases:
+        for name, _alias in _aliases.get(session_id, {}).items():
+            responses.append(f"{name}='{_alias.command}'")
 
-    message = ""
-    names = args.names
     for name in names:
-        if "=" in name:
-            name, command = name.split("=", 1)
-            if name and command and aliases.add_alias(id, name, command):
-                message += f"成功添加{word}：{name}='{command}'\n"
+        _alias = _aliases.get(session_id, {}).get(name)
+        if _alias:
+            responses.append(f"{name}='{_alias.command}'")
         else:
-            command = aliases.get_alias(id, name)
-            if command:
-                message += f"{name}='{command}'\n"
-            else:
-                message += f"不存在的{word}：{name}\n"
+            responses.append(f"不存在的别名：{name}")
 
-    message = message.strip()
-    if message:
-        await alias.send(message)
+    for name, command in aliases.items():
+        if session_id not in _aliases:
+            _aliases[session_id] = {}
+        if _alias := _aliases[session_id].get(name):
+            _alias.matcher.destroy()
+        _aliases[session_id][name] = Alias(
+            name, command, create_alias_matcher(session_id, name, command)
+        )
+        responses.append(f"成功添加别名：{name}='{command}'")
+
+    if responses:
+        await matcher.send("\n".join(responses))
 
 
-@unalias.handle()
-async def _(bot: Bot, event: MessageEvent, args: Namespace = ShellCommandArgs()):
-    gl = args.globally
-    id = "global" if gl else get_id(event)
-    word = "全局别名" if gl else "别名"
+@unalias_matcher.handle()
+async def _(event: Event, matcher: Matcher, names: tuple[str, ...]):
+    session_id = event.get_session_id()
+    responses = []
 
-    is_admin = event.sender.role in ["admin", "owner"]
-    is_superuser = str(event.user_id) in bot.config.superusers
-    is_private = isinstance(event, PrivateMessageEvent)
-
-    if gl and not is_superuser:
-        await alias.finish("管理全局别名需要超级用户权限！")
-
-    if not (is_admin or is_superuser or is_private):
-        await alias.finish("管理别名需要群管理员权限！")
-
-    if args.all:
-        if aliases.del_alias_all(id):
-            await unalias.finish(f"成功删除所有{word}")
-
-    message = ""
-    names = args.names
     for name in names:
-        if aliases.get_alias(id, name):
-            if aliases.del_alias(id, name):
-                message += f"成功删除{word}：{name}\n"
+        if name in _aliases.get(session_id, {}):
+            _aliases[session_id][name].matcher.destroy()
+            _aliases[session_id].pop(name)
+            responses.append(f"成功删除别名：{name}")
         else:
-            message += f"不存在的{word}：{name}\n"
+            responses.append(f"不存在的别名：{name}")
 
-    message = message.strip()
-    if message:
-        await unalias.send(message)
+    if responses:
+        await matcher.send("\n".join(responses))
+
+
+def create_alias_matcher(session_id: str, name: str, command: str) -> type[Matcher]:
+    def _rule(event: Event) -> bool:
+        return event.get_session_id() == session_id
+
+    _matcher = on_command(name, block=False, rule=_rule)
+
+    @_matcher.handle()
+    async def _(bot: Bot, event: Event, msg: Message = CommandArg()):
+        def get_message():
+            new_message = msg.__class__(command)
+            for new_segment in reversed(new_message):
+                msg.insert(0, new_segment)
+            return msg
+
+        fake_event = deepcopy(event)
+        fake_event.get_message = get_message
+        await handle_event(bot, fake_event)
+
+    return _matcher
